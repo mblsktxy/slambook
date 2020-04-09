@@ -1,4 +1,3 @@
-
 #ifndef G2O_COMMAND_ARGS_H
 #define G2O_COMMAND_ARGS_H
 
@@ -7,7 +6,6 @@
 #include <iostream>
 #include <sstream>
 
-
 /**
  * \brief Command line parsing of argc and argv.
  *
@@ -15,21 +13,20 @@
  * we can store the config in a file and reload a parameter set from
  * this file.
  */
-class CommandArgs
-{
-  public:
-    struct CommandArgument
-    {
-      std::string name;
-      std::string description;
-      int type;
-      void* data;
-      bool parsed;
-      bool optional;
-      CommandArgument() : name(""), description(""), type(0), data(0), parsed(false), optional(false)
-      {}
+class CommandArgs {
+public:
+    struct CommandArgument {
+        std::string name;
+        std::string description;
+        int type;
+        void* data;
+        bool parsed;
+        bool optional;
+        CommandArgument(): name(""), description(""), type(0), data(0), parsed(false), 
+                           optional(false) {}
     };
-  public:
+
+public:
     CommandArgs();
     virtual ~CommandArgs();
 
@@ -78,7 +75,7 @@ class CommandArgs
      */
     bool parsedParam(const std::string& paramFlag) const;
 
-  protected:
+protected:
     std::vector<CommandArgument> _args;
     std::vector<CommandArgument> _leftOvers;
     std::vector<CommandArgument> _leftOversOptional;
@@ -91,6 +88,5 @@ class CommandArgs
 
     std::string trim(const std::string& s) const;
 };
-
 
 #endif

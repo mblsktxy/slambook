@@ -6,21 +6,19 @@
 #include "common/BALProblem.h"
 #include "common/BundleParams.h"
 
-
 using namespace ceres;
 
-void SetLinearSolver(ceres::Solver::Options* options, const BundleParams& params)
-{
+void SetLinearSolver(ceres::Solver::Options* options, const BundleParams& params) {
     CHECK(ceres::StringToLinearSolverType(params.linear_solver, &options->linear_solver_type));
     CHECK(ceres::StringToSparseLinearAlgebraLibraryType(params.sparse_linear_algebra_library, &options->sparse_linear_algebra_library_type));
     CHECK(ceres::StringToDenseLinearAlgebraLibraryType(params.dense_linear_algebra_library, &options->dense_linear_algebra_library_type));
-    options->num_linear_solver_threads = params.num_threads;
-
+    // options->num_linear_solver_threads = params.num_threads;
 }
 
-
-void SetOrdering(BALProblem* bal_problem, ceres::Solver::Options* options, const BundleParams& params)
-{
+// Ceres采用额外的类型ParameterBlockOrdering来管理schur消元顺序,
+// 并且使用AddElementToGroup来对变量进行编号从而定义消元顺序。
+// 例如下面设置点云变量为0,相机变量为1,就可以让点云变量先进行消元(优先消元编号最小的变量)
+void SetOrdering(BALProblem* bal_problem, ceres::Solver::Options* options, const BundleParams& params) {
     const int num_points = bal_problem->num_points();
     const int point_block_size = bal_problem->point_block_size();
     double* points = bal_problem->mutable_points();
@@ -29,25 +27,22 @@ void SetOrdering(BALProblem* bal_problem, ceres::Solver::Options* options, const
     const int camera_block_size = bal_problem->camera_block_size();
     double* cameras = bal_problem->mutable_cameras();
 
-
     if (params.ordering == "automatic")
         return;
 
     ceres::ParameterBlockOrdering* ordering = new ceres::ParameterBlockOrdering;
 
     // The points come before the cameras
-    for(int i = 0; i < num_points; ++i)
-       ordering->AddElementToGroup(points + point_block_size * i, 0);
-       
+    for (int i = 0; i < num_points; ++i)
+       ordering->AddElementToGroup(points + point_block_size * i, 0);       
     
-    for(int i = 0; i < num_cameras; ++i)
+    for (int i = 0; i < num_cameras; ++i)
         ordering->AddElementToGroup(cameras + camera_block_size * i, 1);
 
     options->linear_solver_ordering.reset(ordering);
-
 }
 
-void SetMinimizerOptions(Solver::Options* options, const BundleParams& params){
+void SetMinimizerOptions(Solver::Options* options, const BundleParams& params) {
     options->max_num_iterations = params.num_iterations;
     options->minimizer_progress_to_stdout = true;
     options->num_threads = params.num_threads;
@@ -55,19 +50,17 @@ void SetMinimizerOptions(Solver::Options* options, const BundleParams& params){
     // options->max_solver_time_in_seconds = params.max_solver_time;
     
     CHECK(StringToTrustRegionStrategyType(params.trust_region_strategy,
-                                        &options->trust_region_strategy_type));
-    
+                                          &options->trust_region_strategy_type));
 }
 
 void SetSolverOptionsFromFlags(BALProblem* bal_problem,
-                               const BundleParams& params, Solver::Options* options){
+                               const BundleParams& params, Solver::Options* options) {
     SetMinimizerOptions(options,params);
     SetLinearSolver(options,params);
     SetOrdering(bal_problem, options,params);
 }
 
-void BuildProblem(BALProblem* bal_problem, Problem* problem, const BundleParams& params)
-{
+void BuildProblem(BALProblem* bal_problem, Problem* problem, const BundleParams& params) {
     const int point_block_size = bal_problem->point_block_size();
     const int camera_block_size = bal_problem->camera_block_size();
     double* points = bal_problem->mutable_points();
@@ -78,7 +71,7 @@ void BuildProblem(BALProblem* bal_problem, Problem* problem, const BundleParams&
     // and y position of the observation. 
     const double* observations = bal_problem->observations();
 
-    for(int i = 0; i < bal_problem->num_observations(); ++i){
+    for (int i = 0; i < bal_problem->num_observations(); ++i) {
         CostFunction* cost_function;
 
         // Each Residual block takes a point and a camera as input 
@@ -94,15 +87,12 @@ void BuildProblem(BALProblem* bal_problem, Problem* problem, const BundleParams&
         // respectively.
         double* camera = cameras + camera_block_size * bal_problem->camera_index()[i];
         double* point = points + point_block_size * bal_problem->point_index()[i];
-
-     
+    
         problem->AddResidualBlock(cost_function, loss_function, camera, point);
     }
-
 }
 
-void SolveProblem(const char* filename, const BundleParams& params)
-{
+void SolveProblem(const char* filename, const BundleParams& params) {
     BALProblem bal_problem(filename);
 
     // show some information here ...
@@ -112,7 +102,7 @@ void SolveProblem(const char* filename, const BundleParams& params)
     std::cout << "Forming " << bal_problem.num_observations() << " observatoins. " << std::endl;
 
     // store the initial 3D cloud points and camera pose..
-    if(!params.initial_ply.empty()){
+    if (!params.initial_ply.empty()) {
         bal_problem.WriteToPLYFile(params.initial_ply);
     }
 
@@ -131,7 +121,6 @@ void SolveProblem(const char* filename, const BundleParams& params)
 
     std::cout << "the problem is successfully build.." << std::endl;
    
-   
     Solver::Options options;
     SetSolverOptionsFromFlags(&bal_problem, params, &options);
     options.gradient_tolerance = 1e-16;
@@ -141,23 +130,22 @@ void SolveProblem(const char* filename, const BundleParams& params)
     std::cout << summary.FullReport() << "\n";
 
     // write the result into a .ply file.   
-    if(!params.final_ply.empty()){
+    if (!params.final_ply.empty()) {
         bal_problem.WriteToPLYFile(params.final_ply);  // pay attention to this: ceres doesn't copy the value into optimizer, but implement on raw data! 
     }
 }
 
-int main(int argc, char** argv)
-{    
+int main(int argc, char** argv) {
     BundleParams params(argc,argv);  // set the parameters here.
    
     google::InitGoogleLogging(argv[0]);
     std::cout << params.input << std::endl;
-    if(params.input.empty()){
+    if (params.input.empty()) {
         std::cout << "Usage: bundle_adjuster -input <path for dataset>";
         return 1;
     }
 
     SolveProblem(params.input.c_str(), params);
- 
+
     return 0;
 }

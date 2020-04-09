@@ -18,15 +18,15 @@ inline bool CamProjectionWithDistortion(const T* camera, const T* point, T* pred
     // camera[3,4,5] are the translation
     p[0] += camera[3]; p[1] += camera[4]; p[2] += camera[5];
 
-    // Compute the center fo distortion
-    T xp = -p[0]/p[2];
-    T yp = -p[1]/p[2];
+    // Compute the center of distortion
+    T xp = - p[0] / p[2];
+    T yp = - p[1] / p[2];
 
     // Apply second and fourth order radial distortion
     const T& l1 = camera[7];
     const T& l2 = camera[8];
 
-    T r2 = xp*xp + yp*yp;
+    T r2 = xp * xp + yp * yp;
     T distortion = T(1.0) + r2 * (l1 + l2 * r2);
 
     const T& focal = camera[6];
@@ -35,7 +35,5 @@ inline bool CamProjectionWithDistortion(const T* camera, const T* point, T* pred
 
     return true;
 }
-
-
 
 #endif // projection.h

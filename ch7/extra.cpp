@@ -1,6 +1,6 @@
 #include "extra.h"
 #include <iostream>
-using  namespace std;
+using namespace std;
 
 void decomposeEssentialMat( InputArray _E, OutputArray _R1, OutputArray _R2, OutputArray _t )
 {
@@ -194,5 +194,3 @@ cv::Mat findEssentialMat( InputArray _points1, InputArray _points2, double focal
     
     return E;
 }
-
-

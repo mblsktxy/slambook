@@ -6,10 +6,10 @@
 
 using namespace std;
 
-struct BundleParams{
+struct BundleParams {
 public:
     BundleParams(int argc, char** argv);
-    virtual ~BundleParams(){};
+    virtual ~BundleParams() { };
 
 public:
     string input;
@@ -17,7 +17,6 @@ public:
     string linear_solver;
     string sparse_linear_algebra_library;
     string dense_linear_algebra_library;
-
 
     string ordering; // marginalization ..
 
@@ -40,8 +39,7 @@ public:
 
 };
 
- BundleParams::BundleParams(int argc, char** argv)
- {  
+BundleParams::BundleParams(int argc, char** argv) {  
     arg.param("input", input, "", "file which will be processed");
     arg.param("trust_region_strategy", trust_region_strategy, "levenberg_marquardt",                            
               "Options are: levenberg_marquardt, dogleg.");
@@ -70,6 +68,6 @@ public:
 
 
     arg.parseArgs(argc, argv);
- }
+}
 
 #endif

@@ -1,4 +1,4 @@
-add_library( myslam SHARED
+add_library(myslam SHARED
     frame.cpp
     mappoint.cpp
     map.cpp
@@ -6,6 +6,6 @@ add_library( myslam SHARED
     config.cpp
 )
 
-target_link_libraries( myslam
+target_link_libraries(myslam
     ${THIRD_PARTY_LIBS}
 )
